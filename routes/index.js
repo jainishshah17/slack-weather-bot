@@ -9,7 +9,7 @@ var verifySignature = function (req) {
     const signature = req.headers['x-slack-signature'];
     const timestamp = req.headers['x-slack-request-timestamp'];
     const hmac = crypto.createHmac('sha256', process.env.SIGNING_SECRET);
-    var requestBody = qs.stringify(req.body,{ format:'RFC1738' });
+    var requestBody = qs.stringify(req.body, {format: 'RFC1738'});
 
     const [version, hash] = signature.split('=');
 
@@ -38,7 +38,19 @@ router.post('/', function (req, res, next) {
         console.log(body.user_name);
         console.log(body.trigger_id);
         if (verifySignature(req)) {
-            res.send(weather.getCurrent(body.text));
+            var data;
+            if(isNaN(body.text)){
+                data = weather.getCurrentByCity(body.text);
+            }
+            else{
+                data = weather.getCurrentByZip(body.text);
+            }
+            data.then(function (result) {
+                console.log(result);
+                res.json(result);
+            }, function (err) {
+                console.log(err);
+            });
         } else {
             res.sendStatus(500);
         }
